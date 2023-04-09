@@ -5,6 +5,13 @@ For OpenAI API test.
 ```bash
 pipenv install -r requirements.txt
 pipenv shell
-docker build -t audio-summary-api . 
-docker run -p 8080:8080 audio-summary-api
+pip3 innstall aws-sam-cli, localstack
+sam build
+sam local start-api --warm-containers EAGER
+```
+
+## src/.env
+```.dotenv
+LOCALSTACK_API_KEY=Your_LOCALSTACK_API_KEY
+OPENAI_API_KEY=Your_OPENAI_API_KEY
 ```
