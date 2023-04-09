@@ -1,7 +1,4 @@
-import os
-
 import openai
-from dotenv import load_dotenv
 from fastapi import FastAPI, File, Request, UploadFile
 from fastapi.templating import Jinja2Templates
 from mangum import Mangum
@@ -11,10 +8,7 @@ from typing import List
 
 app = FastAPI()
 templates = Jinja2Templates(directory="templates")
-# Load the .env file
-load_dotenv()
-# Load the OpenAI API key from the environment
-openai.api_key = os.getenv("OPENAI_API_KEY")
+openai.api_key = "Your API Key"
 
 
 class SummaryItem(BaseModel):
@@ -59,7 +53,7 @@ async def index(request: Request):
     return templates.TemplateResponse('index.html', context)
 
 
-@app.post("/process_audio", response_model=List[SummaryItem])
+@app.post('/process_audio', response_model=List[SummaryItem])
 async def process_audio(audio: UploadFile = File(...)):
     audio_data = await audio.read()
     transcribed_text = await transcribe_audio(audio_data)

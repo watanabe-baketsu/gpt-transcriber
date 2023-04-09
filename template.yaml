@@ -27,7 +27,7 @@ Resources:
           Type: Api
           Properties:
             Path: '/{proxy+}'
-            Method: GET
+            Method: ANY
             RestApiId: !Ref HandlerApi
 
   # API Gateway
@@ -35,4 +35,3 @@ Resources:
     Type: AWS::Serverless::Api
     Properties:
       StageName: dev
-

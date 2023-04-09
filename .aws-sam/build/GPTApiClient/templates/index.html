@@ -1,6 +1,0 @@
-{% block content %}
-    <form action="{{ url_for('process_audio') }}" method="POST" enctype="multipart/form-data">
-        <input type="file" name="target_audio" placeholder="Please upload the target audio file." style="width:500px;">
-        <input type="submit" value="submit">
-    </form>
-{% endblock %}
