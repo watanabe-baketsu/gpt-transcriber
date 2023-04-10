@@ -1,3 +1,7 @@
+import json
+import os
+
+import boto3
 import openai
 from fastapi import FastAPI, File, Request, UploadFile
 from fastapi.templating import Jinja2Templates
@@ -8,39 +12,49 @@ from typing import List
 
 app = FastAPI()
 templates = Jinja2Templates(directory="templates")
-openai.api_key = "Your API Key"
+
+# openai.api_key = "Your OPENAI_API_KEY" # For local development.
+# For AWS or LocalStack Environment.
+client = boto3.client(region_name="ap-northeast-1", service_name="secretsmanager")
+secret = client.get_secret_value(SecretId=os.environ['OPENAI_API_KEY'])
+secret_json = json.loads(secret["SecretString"])
+openai.api_key = secret_json['apikey']
 
 
 class SummaryItem(BaseModel):
     text: str
 
 
-async def transcribe_audio(audio_file: bytes) -> str:
-    file = audio_file
-    model = "whisper-1"
-    language = "ja-JP"
-    response = openai.Audio.transcribe(
-        file=file,
-        model=model,
-        language=language
-    )
-    print(response)
-    transcribe_text = response.transcript
+async def transcribe_audio(audio_file: str) -> str:
+    with open(audio_file, "rb") as fp:
+        model = "whisper-1"
+        language = "ja"
+        response = openai.Audio.transcribe(
+            file=fp,
+            model=model,
+            language=language
+        )
+    transcribe_text = response.text
     return transcribe_text
 
 
+async def save_audio(audio_file: UploadFile) -> str:
+    file_location = f"/tmp/{audio_file.filename}"
+    with open(file_location, "wb+") as file_object:
+        file_object.write(audio_file.file.read())
+    return file_location
+
+
 async def summarize_text(text: str) -> List[str]:
-    prompt = f"Summarize the following text in bullet points and in Japanese:\n\n{text}\n"
-    response = openai.Completion.create(
-        engine="text-davinci-002",
-        prompt=prompt,
-        max_tokens=100,
-        n=1,
-        stop=None,
-        temperature=0.5,
+    prompt = f"あなたはとても優秀なassistantです。" \
+             f"以下のテキストを箇条書きにして、内容をまとめてください。箇条書きの数は多くても5までとします。" \
+             f":\n\n{text}\n"
+    response = openai.ChatCompletion.create(
+        model="gpt-3.5-turbo",
+        messages=[{"role": "system", "content": prompt}],
     )
 
-    summary = response.choices[0].text.strip()
+    summary = response.choices[0].message.content.strip()
     bullet_points = summary.split('\n')
 
     return bullet_points
@@ -53,13 +67,16 @@ async def index(request: Request):
     return templates.TemplateResponse('index.html', context)
 
 
-@app.post('/process_audio', response_model=List[SummaryItem])
-async def process_audio(audio: UploadFile = File(...)):
-    audio_data = await audio.read()
-    transcribed_text = await transcribe_audio(audio_data)
+@app.post('/process_audio')
+async def process_audio(request: Request, audio: UploadFile = File(...)):
+    audio_location = await save_audio(audio)
+    transcribed_text = await transcribe_audio(audio_location)
+    print(transcribed_text)
     summary_points = await summarize_text(transcribed_text)
 
-    return [{"text": point} for point in summary_points]
+    summary = [point for point in summary_points]
+    context = {"request": request, "summary": summary}
+    return templates.TemplateResponse('summary.html', context)
 
 
 lambda_handler = Mangum(app)

@@ -1,5 +1,5 @@
 {% block content %}
-    <form action="/process_audio" method="post" enctype="multipart/form-data">
+    <form action="{{ url_for('process_audio') }}" method="post" enctype="multipart/form-data">
         <input type="file" name="audio" accept="audio/mpeg" style="width:500px;">
         <button type="submit">Upload</button>
     </form>

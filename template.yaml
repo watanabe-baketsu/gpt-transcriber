@@ -4,7 +4,32 @@ Description: >
   python3.9
   gpt-transcriber PoC
 
+
+Parameters:
+  SystemPrefix:
+    Type: String
+    Description: use for resource name pattern
+    Default: "gpt-transcriber"
+
+
 Resources:
+  IamRoleLambda:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      Path: /
+      ManagedPolicyArns:
+        - "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+        - "arn:aws:iam::aws:policy/SecretsManagerReadWrite"
+      RoleName: !Sub "${SystemPrefix}-Role"
+
+
   # Lambda(Engine)
   GPTApiClient:
     Type: AWS::Serverless::Function
@@ -12,10 +37,14 @@ Resources:
       CodeUri: src/
       Handler: app.lambda_handler
       Runtime: python3.9
+      Role: !GetAtt IamRoleLambda.Arn
       Timeout: 900
       MemorySize: 2048
       Architectures:
-        - arm64
+        - x86_64
+      Environment:
+        Variables:
+          OPENAI_API_KEY: "openai-api-key"
       Events:
         ApiRoot:
           Type: Api
@@ -29,9 +58,57 @@ Resources:
             Path: '/{proxy+}'
             Method: ANY
             RestApiId: !Ref HandlerApi
+            Auth:
+              Authorizer: NONE
+
+
+  # Lambda Authorizer
+  AuthorizerFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: src/
+      Handler: authorizer.lambda_handler
+      Runtime: python3.9
+      Role: !GetAtt IamRoleLambda.Arn
+      Timeout: 30
+      Architectures:
+        - x86_64
+      Environment:
+        Variables:
+          AUTHORIZER: !Sub "${SystemPrefix}-secrets"
+
+  # create secret
+  AuthorizerSecret:
+    Type: AWS::SecretsManager::Secret
+    Properties:
+      Name: !Sub "${SystemPrefix}-secrets"
+      Description: "secret for transcriber"
+      GenerateSecretString:
+        SecretStringTemplate: '{
+          "user": "gin-user"
+          }'
+        GenerateStringKey: "pass"
+        PasswordLength: 16
+        ExcludeCharacters: "\"@'%$#&().,{_?<≠^>[:;`+*!]}=~|¥/\\"
 
   # API Gateway
   HandlerApi:
     Type: AWS::Serverless::Api
     Properties:
       StageName: dev
+      GatewayResponses:
+        UNAUTHORIZED:
+          ResponseParameters:
+            Headers:
+              WWW-Authenticate: "'Basic'"
+      Auth:
+        AddDefaultAuthorizerToCorsPreflight: false
+        DefaultAuthorizer: LambdaAuthorizer
+        Authorizers:
+          LambdaAuthorizer:
+            FunctionPayloadType: REQUEST
+            FunctionArn: !GetAtt AuthorizerFunction.Arn
+            Identity:
+              Headers:
+                - Authorization
+              ReauthorizeEvery: 300

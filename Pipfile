@@ -12,6 +12,8 @@ pydantic = "*"
 python-multipart = "*"
 python-dotenv = "*"
 whisper = "*"
+boto3 = "*"
+jinja2 = "*"
 
 [dev-packages]
 

@@ -1,10 +1,11 @@
 version = 0.1
 [default.deploy.parameters]
-stack_name = "sam-app"
+stack_name = "transcriber"
 resolve_s3 = true
-s3_prefix = "sam-app"
-region = "us-east-1"
-profile = "localstack"
+s3_prefix = "transcriber"
+region = "ap-northeast-1"
+profile = "default"
 capabilities = "CAPABILITY_NAMED_IAM"
-parameter_overrides = "SystemPrefix=\"gpt-transcriber\" Environment=\"develop\""
+parameter_overrides = "SystemPrefix=\"gpt-transcriber\""
 image_repositories = []
+confirm_changeset = false

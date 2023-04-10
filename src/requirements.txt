@@ -1,9 +1,9 @@
+boto3
 fastapi
 jinja2
 uvicorn
 mangum
 openai
 pydantic
-python-dotenv
 python-multipart
 whisper

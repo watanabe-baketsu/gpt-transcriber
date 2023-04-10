@@ -9,6 +9,24 @@ pip3 innstall aws-sam-cli, localstack
 sam build
 sam local start-api --warm-containers EAGER
 ```
+### Simple test
+```bash
+cd ./src
+uvicorn app:app --reload
+```
+
+### LocalStack test
+```bash
+docker-compose up -d
+samlocal build
+samlocal deploy --stack-name openai-test-api --capabilities CAPABILITY_NAMED_IAM --profile localstack
+```
+
+### AWS test
+```bash
+sam build
+sam deploy --stack-name openai-test-api --capabilities CAPABILITY_NAMED_IAM --profile Your_AWS_PROFILE --guided
+```
 
 ## src/.env
 ```.dotenv
