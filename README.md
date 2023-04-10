@@ -5,9 +5,6 @@ For OpenAI API test.
 ```bash
 pipenv install -r requirements.txt
 pipenv shell
-pip3 innstall aws-sam-cli, localstack
-sam build
-sam local start-api --warm-containers EAGER
 ```
 ### Simple test
 ```bash
@@ -17,6 +14,13 @@ uvicorn app:app --reload
 
 ## src/.env
 ```.dotenv
-LOCALSTACK_API_KEY=Your_LOCALSTACK_API_KEY
 OPENAI_API_KEY=Your_OPENAI_API_KEY
+```
+
+## EC2 deploy
+```bash
+git clone https://watanabe-baketsu/gpt-transcripter.git
+cd ./gpt-transcripter/src
+pipinstall -r requirements.txt
+sudo nohup uvicorn app:app --host 0.0.0.0 --port 80 > output.log 2>&1 &
 ```

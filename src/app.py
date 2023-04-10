@@ -3,6 +3,7 @@ import os
 
 import boto3
 import openai
+from dotenv import load_dotenv
 from fastapi import FastAPI, File, Request, UploadFile
 from fastapi.templating import Jinja2Templates
 from mangum import Mangum
@@ -13,7 +14,8 @@ from typing import List
 app = FastAPI()
 templates = Jinja2Templates(directory="templates")
 
-openai.api_key = "Your APIKEY" # For local development.
+load_dotenv()
+openai.api_key = os.environ['OPENAI_API_KEY']
 # For AWS or LocalStack Environment.
 # client = boto3.client(region_name="ap-northeast-1", service_name="secretsmanager")
 # secret = client.get_secret_value(SecretId=os.environ['OPENAI_API_KEY'])
