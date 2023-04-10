@@ -13,12 +13,12 @@ from typing import List
 app = FastAPI()
 templates = Jinja2Templates(directory="templates")
 
-# openai.api_key = "Your OPENAI_API_KEY" # For local development.
+openai.api_key = "Your APIKEY" # For local development.
 # For AWS or LocalStack Environment.
-client = boto3.client(region_name="ap-northeast-1", service_name="secretsmanager")
-secret = client.get_secret_value(SecretId=os.environ['OPENAI_API_KEY'])
-secret_json = json.loads(secret["SecretString"])
-openai.api_key = secret_json['apikey']
+# client = boto3.client(region_name="ap-northeast-1", service_name="secretsmanager")
+# secret = client.get_secret_value(SecretId=os.environ['OPENAI_API_KEY'])
+# secret_json = json.loads(secret["SecretString"])
+# openai.api_key = secret_json['apikey']
 
 
 class SummaryItem(BaseModel):
@@ -26,11 +26,12 @@ class SummaryItem(BaseModel):
 
 
 async def transcribe_audio(audio_file: str) -> str:
-    with open(audio_file, "rb") as fp:
+    with open(audio_file, "rb") as audio_data:
         model = "whisper-1"
         language = "ja"
+        print(audio_data.name)
         response = openai.Audio.transcribe(
-            file=fp,
+            file=audio_data,
             model=model,
             language=language
         )
@@ -47,7 +48,7 @@ async def save_audio(audio_file: UploadFile) -> str:
 
 async def summarize_text(text: str) -> List[str]:
     prompt = f"あなたはとても優秀なassistantです。" \
-             f"以下のテキストを箇条書きにして、内容をまとめてください。箇条書きの数は多くても5までとします。" \
+             f"以下のテキストを箇条書きにして、内容を要約してください。箇条書きの数は多くても5つまでとします。" \
              f":\n\n{text}\n"
     response = openai.ChatCompletion.create(
         model="gpt-3.5-turbo",

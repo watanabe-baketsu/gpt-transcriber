@@ -15,19 +15,6 @@ cd ./src
 uvicorn app:app --reload
 ```
 
-### LocalStack test
-```bash
-docker-compose up -d
-samlocal build
-samlocal deploy --stack-name openai-test-api --capabilities CAPABILITY_NAMED_IAM --profile localstack
-```
-
-### AWS test
-```bash
-sam build
-sam deploy --stack-name openai-test-api --capabilities CAPABILITY_NAMED_IAM --profile Your_AWS_PROFILE --guided
-```
-
 ## src/.env
 ```.dotenv
 LOCALSTACK_API_KEY=Your_LOCALSTACK_API_KEY
